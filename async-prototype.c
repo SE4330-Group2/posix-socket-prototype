@@ -19,7 +19,7 @@ void *TX_task(void *txDelay)
     while( msgNum < NUM_MESSAGES )
     {
         nanosleep(&delay, NULL);
-        printf("I am TX transmitting message number %ld\n", ++msgNum);
+        printf("I am TX and I am going to send a %ld\n", ++msgNum);
     }
 
     sleep(END_WAIT);
@@ -83,6 +83,10 @@ int main(int argc, char **argv)
     pthread_join(thread_rx, NULL);
     
     printf("I am out of RX\n");
+    
+    printf("a nice done message\n");
+    
+    
     
     return 0;
 }
