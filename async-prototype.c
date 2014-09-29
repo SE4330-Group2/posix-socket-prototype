@@ -3,22 +3,22 @@
 #include <pthread.h>
 #include <time.h>
 
-const int NUM_MESSAGES = 20;
-const int INIT_WAIT = 5;
-const int END_WAIT = 10;
+const int NUM_MESSAGES = 5; //20
+const int INIT_WAIT = 1; //5
+const int END_WAIT = 2; //10
 
 void *TX_task(void *txDelay)
 {
     int msgNum = 0;
-    int *transDelay = (int*)txDelay;
-    struct timespec *delay;
-    delay->tv_sec = (time_t)(*transDelay/1000);
-    delay->tv_nsec = (*transDelay%1000) * 1000000;
+    int* transDelay = txDelay;
+    struct timespec delay;
+    delay.tv_sec = (time_t)(*transDelay/1000);
+    delay.tv_nsec = (*transDelay%1000) * 1000000;
     sleep(INIT_WAIT);
 
     while( msgNum < NUM_MESSAGES )
     {
-        nanosleep(delay, NULL);
+        nanosleep(&delay, NULL);
         printf("I am TX transmitting message number %ld\n", ++msgNum);
     }
 
@@ -32,7 +32,7 @@ void *RX_task(void *param)
 {
     int wait = 0;
     int i = 0;
-    sleep(5);
+    //sleep(5);
     while( wait < 200 )
     {
         wait++;
@@ -51,29 +51,38 @@ int main(int argc, char **argv)
     int portRx = strtol(argv[4], &pEnd, 10);
     int rateTx = strtol(argv[5], &pEnd, 10);
     
+    int* foo = &rateTx;
+    
     printf("Transmit IP: %s\n", ipTx);
     printf("Receive IP: %s\n", ipRx);
     printf("Transmit Port: %ld\n", portTx);
     printf("Receive Port: %ld\n", portRx);
     printf("Transport Rate: %ld\n", rateTx);
 
-    pthread_t thread0, thread1;
+    pthread_t thread_tx, thread_rx;
 
-    if( pthread_create(&thread0, NULL, TX_task, &rateTx))
+    if( pthread_create(&thread_tx, NULL, TX_task, foo))
     {
         perror("Couldn't create thread!");
         return 1;
     }
 
-    if( pthread_create(&thread1, NULL, RX_task, NULL))
+    if( pthread_create(&thread_rx, NULL, RX_task, NULL))
     {
         perror("Couldn't create thread!");
         return 1;
     }
+    
+    printf("I am waiting for TX\n");
+    void * blah;
 
-    pthread_join(thread0, NULL);
-    pthread_join(thread1, NULL);
+    pthread_join(thread_tx, blah);
     
     printf("I am out of TX\n");
+
+    pthread_join(thread_rx, NULL);
+    
+    printf("I am out of RX\n");
+    
     return 0;
 }
