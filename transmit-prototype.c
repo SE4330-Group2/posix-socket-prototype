@@ -24,7 +24,7 @@ int createSocket(struct addrinfo * addr)
 {
     printf("Creating new socket with given address info\n");
     
-    int sock=socket(addr->ai_family,addr->ai_socktype,addr->ai_protocol);
+    int sock = socket(addr->ai_family,addr->ai_socktype,addr->ai_protocol);
     if (sock==-1) {
         printf("Error occurred creating socket so now I am sad");
         return -1;
@@ -58,10 +58,15 @@ int main(int argc, char **argv)
     int tmp = 3;
     int * buffer = &tmp;
     
-    int success=sendto(socket,buffer,sizeof(buffer),0,addr->ai_addr,addr->ai_addrlen);
-    if(success==-1) {
-        printf("Error occurred sending so now I am sad");
-        return -1;
+    while(1)
+    {
+        printf("Sending\n");
+        int success=sendto(socket,buffer,sizeof(buffer),0,addr->ai_addr,addr->ai_addrlen);
+        if(success==-1) {
+            printf("Error occurred sending so now I am sad");
+            return -1;
+        }
+        sleep(1);
     }
     
     return 0;
