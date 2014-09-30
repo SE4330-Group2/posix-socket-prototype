@@ -1,23 +1,3 @@
-/*
-* udpserver.c
-*
-* This is an example TCP/IP UDP socket server.
-* It will read packets sent to 'portno' and write them back
-* to the sender.  It has no reliability functions.
-* It will loop forever and must be killed in order to make
-* it terminate.
-*
-* Protocol independant( working for both IPV4 and IPV6)
-* syntax:
-*      % udpserver portno &
-*
-* Start the server first and then start the udpclient.c app to
-* send packets to it.  Use the debug switch with udpclient.c to
-* see if any of the packets disappear.  They won't disappear on
-* localhost, but they might go away if they are crossing a busy 
-* router.
-*/
-
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -49,7 +29,6 @@ struct addrinfo * createAddressInfo(const char* address, const char* port)
 
   int n;
   struct addrinfo hints, *res;
-  /*initilize addrinfo structure*/ 
   bzero(&hints, sizeof(struct addrinfo));
   hints.ai_flags=AI_PASSIVE;
   hints.ai_family= AF_UNSPEC;
@@ -68,31 +47,18 @@ struct addrinfo * createAddressInfo(const char* address, const char* port)
 
 int main(int argc, char **argv)
 {
-  int sockfd;
-  ssize_t m;
+  int socket;
   socklen_t addrlen, len;
   struct sockaddr *cliaddr;
-  char* port;
   struct addrinfo *res, *ressave;
-  int current = 0;
 
-  if(argc== 2)
-  {
-    port=argv[1];
-  }
-  else
-  {
-    printf("usage: udpserver <portnumber>\n");
-    return 0;
-  }  
-
-  res = createAddressInfo(NULL, port);
+  res = createAddressInfo(NULL, args->portRx);
 
   ressave=res;
 
-  sockfd=createSocket(res);
+  socket=createSocket(res);
 
-  bind(sockfd, res->ai_addr, res->ai_addrlen);
+  bind(socket, res->ai_addr, res->ai_addrlen);
 
   if(&addrlen)
     addrlen=res->ai_addrlen;
@@ -108,14 +74,13 @@ int main(int argc, char **argv)
     int rc;
     int foo = 1;
     int *foo2 = &foo;
-    if ((rc=recvfrom(sockfd, foo2, sizeof(foo), 0, cliaddr, &len)) < 0 ) {
+    if ((rc=recvfrom(socket, foo2, sizeof(foo), 0, cliaddr, &len)) < 0 ) {
       printf("server error: errno %d\n",errno);
       perror("reading datagram");
       return -1;
     }
     printf("I am RX and I got a %d\n", *foo2);
   }
-
-  close(sockfd);
+  close(socket);
   return 0;
 } 

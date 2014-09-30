@@ -1,34 +1,3 @@
-/*
-* udpclient.c
-*
-* OS: FreeBSD
-* compiler: cc
-*      To compile: cc -o udpclient -g udpclient.c
-*
-* Protocol Independant (working for both IPV4 and IPV6)
-*
-* udpclient assumes udpserver.c is running first.
-* It sends 'count' packets to the server which in turn writes
-* them back to the client; i.e., the server provides an echo service.
-*
-* To run:
-*      1. first run udpserver on some udp port that is not used.
-*      (you can make sure ports are not used with %netstat -a | grep udp)
-*
-*      % udpserver 10000&
-*
-*      2. then run the client
-*
-*      %udpclient localhost 10000 512
-*      %udpclient mchugh.cs.pdx.edu 10000 512
-*      %udpclient 131.252.215.20 10000 512
-*      %udpclient 2001:468:1f04:2f0:250:daff:fe83:d48c 10000 512
-*
-* syntax:
-*      % udpclient remote_host udp_port number_of_packets_to_echo
-*
-*/
-
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -37,7 +6,37 @@
 #include <sys/time.h>
 #include <errno.h>
 
+typedef struct arguments
+{
+    char* ipTx;
+    char* ipRx;
+    char* portTx; 
+    char* portRx;
+    int rateTx;
+} arguments;
+
+
 extern int errno;
+
+struct arguments * parseArgs(int argc, char **argv)
+{
+  if(argc != 6)
+  {
+    printf("usage: posix-socket <tx hostname> <rx hostname> <tx port> <rx port> <tx rate>\n");
+    return NULL;
+  }
+  char* pEnd;
+  
+  arguments args = {
+	.ipTx = argv[1],
+	.ipRx = argv[2],
+	.portTx = argv[3],
+	.portRx = argv[4],
+	.rateTx = strtol(argv[5], &pEnd, 10)
+  };
+  
+  return &args;
+}
 
 int createSocket(struct addrinfo * addr)
 {
@@ -60,7 +59,6 @@ struct addrinfo * createAddressInfo(const char* address, const char* port)
 
   int n;
   struct addrinfo hints, *res;
-  /*initilize addrinfo structure*/ 
   bzero(&hints, sizeof(struct addrinfo));
   hints.ai_flags=AI_PASSIVE;
   hints.ai_family= AF_UNSPEC;
@@ -77,31 +75,21 @@ struct addrinfo * createAddressInfo(const char* address, const char* port)
   return res;
 }
 
-int main (int argc, char **argv){
-
-  int sockfd, rc;
+int main (int argc, char **argv)
+{
+  int socket;
   socklen_t salen;
   struct sockaddr *sa;
   struct addrinfo *res, *ressave;
-  char *host, *port, *count;
-  int i;
-  int fromlen;
+  int count = 20;
 
-  if(argc != 4)
-  {
-    printf("usage: tcpclient <hostname/IPaddress> <portnumber> <count> \n");
-    return 0;
-  }
+  arguments * args = parseArgs(argc, argv);
 
-  host=argv[1];
-  port=argv[2];
-  count=atoi(argv[3]);
-
-  res = createAddressInfo(host, port);
+  res = createAddressInfo(args->ipTx, args->portTx);
 
   ressave=res;
 
-  sockfd=createSocket(res);
+  socket=createSocket(res);
 
   sa=malloc(res->ai_addrlen);
   memcpy(sa, res->ai_addr, res->ai_addrlen);
@@ -109,19 +97,18 @@ int main (int argc, char **argv){
 
   freeaddrinfo(ressave);
 
-  for ( i = 0; i < count; i++) {
-
+  for ( int i = 0; i < count; i++)
+  {
     printf("I am TX and I am going to send a %d\n", i);
 
-    if( rc = sendto(sockfd,&i,sizeof(i),0,sa, salen) < 0 )
+    if( sendto(socket,&i,sizeof(i),0,sa, salen) < 0 )
     {
       if (errno == ENOBUFS)
         continue;
       perror("sending datagram");
       return -1;
     }
-
-  }/*end of for */ 
-  close(sockfd);
+  }
+  close(socket);
   return 0;
 }
