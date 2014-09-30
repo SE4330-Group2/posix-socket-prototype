@@ -58,6 +58,8 @@ struct addrinfo * createAddressInfo(const char* address, const char* port)
 {
     printf("Creating address info for %s:%s\n", address, port);
     
+	int n;
+	struct addrinfo hints, *res,
     /*initilize addrinfo structure*/ 
     bzero(&hints, sizeof(struct addrinfo));
     hints.ai_flags=AI_PASSIVE;
@@ -65,20 +67,21 @@ struct addrinfo * createAddressInfo(const char* address, const char* port)
     hints.ai_socktype= SOCK_DGRAM;
     hints.ai_protocol=IPPROTO_UDP;
 
-    if((n = getaddrinfo(NULL, port, &hints, &res)) !=0)
-        printf("udpserver error for %s: %s",port,gai_strerror(n));
-    
-    printf("Error occurred in createAddressInfo with err=%ld.\n", err);
+    if((n = getaddrinfo(NULL, port, &hints, &res)) !=0) {
+        printf("udpclient error for %s: %s",port,gai_strerror(n));
+		return NULL;
+    }
+    printf("Successfully created address info.\n", err);
 
-    return NULL;
+    return res;
 }
 
 int main (int argc, char **argv){
   
-  int sockfd, n, rc;
+  int sockfd, rc;
   socklen_t salen;
   struct sockaddr *sa;
-  struct addrinfo hints, *res, *ressave;
+  struct addrinfo *res, *ressave;
   char *host, *port, *count;
   int i;
   int fromlen;
