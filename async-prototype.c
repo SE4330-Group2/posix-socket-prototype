@@ -21,24 +21,23 @@ typedef struct arguments
     int rateTx;
 } arguments;
 
-struct arguments * parseArgs(int argc, char **argv)
+void parseArgs(int argc, char **argv, arguments * args)
 {
   if(argc != 6)
   {
     printf("usage: posix-socket <tx hostname> <rx hostname> <tx port> <rx port> <tx rate>\n");
-    return NULL;
+    return;
   }
   char* pEnd;
   
-  arguments args = {
-	.ipTx = argv[1],
-	.ipRx = argv[2],
-	.portTx = argv[3],
-	.portRx = argv[4],
-	.rateTx = strtol(argv[5], &pEnd, 10)
-  };
-  
-  return &args;
+  args->ipTx = argv[1];
+  args->ipRx = argv[2];
+  args->portTx = argv[3];
+  args->portRx = argv[4];
+  args->rateTx = strtol(argv[5], &pEnd, 10);
+
+  printf("ipTx: %s\n", args->ipTx);
+  printf("ipRx: %s\n", args->ipRx);
 }
 
 int createSocket(struct addrinfo * addr)
@@ -92,7 +91,7 @@ void *TX_task(void *a)
 
   arguments * args = a;
 
-  ressave = res = createAddressInfo(NULL, args->portRx);
+  ressave = res = createAddressInfo(args->ipTx, args->portTx);
 
   socket=createSocket(res);
 
@@ -112,10 +111,11 @@ void *TX_task(void *a)
       if (errno == ENOBUFS)
         continue;
       perror("sending datagram");
-      return -1;
+      return NULL;
     }
   }
   close(socket);
+  return NULL;
 }
 
 void *RX_task(void *a)
@@ -127,7 +127,7 @@ void *RX_task(void *a)
 
   arguments * args = a;
   
-  ressave = res = createAddressInfo(NULL, args->portRx);
+  ressave = res = createAddressInfo(args->ipRx, args->portRx);
 
   socket=createSocket(res);
 
@@ -150,11 +150,12 @@ void *RX_task(void *a)
     if ((rc=recvfrom(socket, foo2, sizeof(foo), 0, cliaddr, &len)) < 0 ) {
       printf("server error: errno %d\n",errno);
       perror("reading datagram");
-      return -1;
+      return NULL;
     }
     printf("I am RX and I got a %d\n", *foo2);
   }
   close(socket);
+  return NULL;
 }
 
 int main(int argc, char **argv)
@@ -176,16 +177,17 @@ int main(int argc, char **argv)
     printf("Transport Rate: %ld\n", rateTx);
 
     pthread_t thread_tx, thread_rx;
-	
-	arguments * args = parseArgs(argc, argv);
+    
+    arguments args;	
+    parseArgs(argc, argv, &args);
 
-    if( pthread_create(&thread_tx, NULL, TX_task, args))
+    if( pthread_create(&thread_tx, NULL, TX_task, &args))
     {
         perror("Couldn't create thread!");
         return 1;
     }
 
-    if( pthread_create(&thread_rx, NULL, RX_task, args))
+    if( pthread_create(&thread_rx, NULL, RX_task, &args))
     {
         perror("Couldn't create thread!");
         return 1;
