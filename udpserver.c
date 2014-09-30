@@ -30,7 +30,7 @@
 
 #define ACK  'z'
 
-#define MAXBUF	10 * 1024;
+#define MAXBUF	10 * 1024
 
 int main(int argc, char **argv)
 {
@@ -64,19 +64,15 @@ int main(int argc, char **argv)
 
  ressave=res;
 
- do {/* each of the returned IP address is tried*/
-    sockfd=socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-    if (sockfd<0) {
-      printf("Socket creation failed\n");
-      continue; /* fail, try next one*/
-    }
-    if (bind(sockfd, res->ai_addr, res->ai_addrlen) == 0)
-      break; /*success*/
-    
-    close(sockfd);
-
- }while( (res=res->ai_next)!= NULL); 
+ sockfd=socket(res->ai_family, res->ai_socktype, res->ai_protocol);
  
+ if (sockfd<0) {
+     printf("Socket creation failed\n");
+     return -1;
+ }
+
+ bind(sockfd, res->ai_addr, res->ai_addrlen);
+       
  if(&addrlen)
    addrlen=res->ai_addrlen;
  
@@ -88,24 +84,18 @@ int main(int argc, char **argv)
 
  while ( 1 ) {     /* do forever */
 	int rc;
-
-	if ((rc=recvfrom(sockfd, buf, MAXBUF, 0, cliaddr, &len)) < 0 ) {
+        int foo = 1;
+        int *foo2 = &foo;
+	if ((rc=recvfrom(sockfd, foo2, MAXBUF, 0, cliaddr, &len)) < 0 ) {
 		printf("server error: errno %d\n",errno);
 		perror("reading datagram");
 		return -1;
 	}
+        printf("Got: %d\n", *foo2);
 
-	printf("udpserver: got packet %d\n", current);
-
-	if( sendto(sockfd,&ackvar,sizeof(long), 0,cliaddr,len  ) < 0 ) {
-        	perror("sendto");
-		if (errno == ENOBUFS)
-			continue;
-		return -1;
-	}
-	current++;
-
+	printf("udpserver: got packet %d\n", current++);
 }
+
 /* can't get here, but just in case: close sockets
 */
 close(sockfd);

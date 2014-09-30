@@ -95,14 +95,10 @@ int main (int argc, char **argv){
   salen=res->ai_addrlen;
 
   freeaddrinfo(ressave);
- 
-  fillBuf(mbuf.buf, BUFSIZE);
 
   for ( i = 0; i < count; i++) {
 
    printf("client msg no [%d]\n", i);
-
-   mbuf.count = i;
 
    /* write msg to remote system
    * sock
@@ -112,7 +108,7 @@ int main (int argc, char **argv){
    * client
    * sizeof (client)
    */
-   if( rc = sendto(sockfd,&mbuf,sizeof (struct msgbuf),0,sa, salen) <0 ) {
+   if( rc = sendto(sockfd,&i,sizeof (struct msgbuf),0,sa, salen) <0 ) {
 	/* buffers aren't available locally at the moment,
 	 * try again.
 	 */
@@ -122,23 +118,7 @@ int main (int argc, char **argv){
 	return -1;
    }
 
-
-   /* read acknowledgement from remote system
-   */
-   if (recvfrom(sockfd, &ackvar, sizeof(long), 0, NULL, NULL) < 0 ) {
-	printf("server error: errno %d\n",errno);
-	perror("reading datagram");
-	return -1;
-   }
-
-   if ( ackvar == ACK)
-        acks++;
-   else
-        nonacks++;
-
  }/*end of for */ 
-  printf("udpclient: count sent %d\n", count);
-  printf("udpclient: acks %d nonacks %d\n",acks,nonacks);
   close(sockfd);
   return 0;
 
