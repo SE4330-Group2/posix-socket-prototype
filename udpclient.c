@@ -15,7 +15,6 @@ typedef struct arguments
     int rateTx;
 } arguments;
 
-
 extern int errno;
 
 struct arguments * parseArgs(int argc, char **argv)
@@ -97,7 +96,8 @@ int main (int argc, char **argv)
 
   freeaddrinfo(ressave);
 
-  for ( int i = 0; i < count; i++)
+  int i;
+  for ( i = 0; i < count; i++)
   {
     printf("I am TX and I am going to send a %d\n", i);
 

@@ -8,6 +8,35 @@
 #include <errno.h>
 #include <signal.h>
 
+typedef struct arguments
+{
+    char* ipTx;
+    char* ipRx;
+    char* portTx; 
+    char* portRx;
+    int rateTx;
+} arguments;
+
+struct arguments * parseArgs(int argc, char **argv)
+{
+  if(argc != 6)
+  {
+    printf("usage: posix-socket <tx hostname> <rx hostname> <tx port> <rx port> <tx rate>\n");
+    return NULL;
+  }
+  char* pEnd;
+  
+  arguments args = {
+	.ipTx = argv[1],
+	.ipRx = argv[2],
+	.portTx = argv[3],
+	.portRx = argv[4],
+	.rateTx = strtol(argv[5], &pEnd, 10)
+  };
+  
+  return &args;
+}
+
 int createSocket(struct addrinfo * addr)
 {
   printf("Creating new socket with given address info\n");
