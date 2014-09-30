@@ -82,7 +82,7 @@ struct addrinfo * createAddressInfo(const char* address, const char* port)
   return res;
 }
 
-void *TX_task(void *args)
+void *TX_task(void *a)
 {
   int socket;
   socklen_t salen;
@@ -90,6 +90,7 @@ void *TX_task(void *args)
   struct addrinfo *res, *ressave;
   int count = 20;
   struct timespec delay;
+  arguments * args = a;
   delay.tv_sec = (time_t)(args->rateTx/1000);
   delay.tv_nsec = (args->rateTx%1000) * 1000000;
   sleep(INIT_WAIT);
