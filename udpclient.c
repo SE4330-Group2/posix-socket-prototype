@@ -82,12 +82,11 @@ int main (int argc, char **argv){
     printf("udpclient error for %s, %s: %s", host, port, gai_strerror(n));
   ressave=res;
 
-  do{/* each of the returned IP address is tried*/
     sockfd=socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-    if(sockfd>= 0)
-      break; /*success*/
-  }while ((res=res->ai_next) != NULL);
-
+    if(sockfd < 0){
+      printf("Error creating socket\n");
+      return -1;
+    }
   sa=malloc(res->ai_addrlen);
   memcpy(sa, res->ai_addr, res->ai_addrlen);
   salen=res->ai_addrlen;
