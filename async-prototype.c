@@ -3,6 +3,7 @@
 #include <pthread.h>
 #include <time.h>
 
+
 const int NUM_MESSAGES = 5; //20
 const int INIT_WAIT = 1; //5
 const int END_WAIT = 2; //10

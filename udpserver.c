@@ -7,6 +7,8 @@
 #include <sys/times.h>
 #include <errno.h>
 #include <signal.h>
+#include <stdlib.h>
+#include <string.h>
 
 typedef struct arguments
 {
@@ -83,9 +85,7 @@ int main(int argc, char **argv)
 
   arguments * args = parseArgs(argc, argv);
   
-  res = createAddressInfo(NULL, args->portRx);
-
-  ressave=res;
+  ressave = res = createAddressInfo(NULL, args->portRx);
 
   socket=createSocket(res);
 
