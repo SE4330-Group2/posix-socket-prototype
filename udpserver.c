@@ -55,8 +55,8 @@ int main(int argc, char **argv)
  /*initilize addrinfo structure*/ 
  bzero(&hints, sizeof(struct addrinfo));
  hints.ai_flags=AI_PASSIVE;
- hints. ai_family= AF_UNSPEC;
- hints. ai_socktype= SOCK_DGRAM;
+ hints.ai_family= AF_UNSPEC;
+ hints.ai_socktype= SOCK_DGRAM;
  hints.ai_protocol=IPPROTO_UDP;
 
  if((n = getaddrinfo(NULL, port, &hints, &res)) !=0)
@@ -91,9 +91,7 @@ int main(int argc, char **argv)
 		perror("reading datagram");
 		return -1;
 	}
-        printf("Got: %d\n", *foo2);
-
-	printf("udpserver: got packet %d\n", current++);
+        printf("I am RX and I got a %d\n", *foo2);
 }
 
 /* can't get here, but just in case: close sockets

@@ -98,7 +98,7 @@ int main (int argc, char **argv){
 
   for ( i = 0; i < count; i++) {
 
-   printf("client msg no [%d]\n", i);
+   printf("I am TX and I am going to send a %d\n", i);
 
    /* write msg to remote system
    * sock
