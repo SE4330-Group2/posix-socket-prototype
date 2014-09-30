@@ -1,45 +1,160 @@
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
 #include <stdio.h>
+#include <sys/time.h>
+#include <errno.h>
 #include <stdlib.h>
+#include <string.h>
 #include <pthread.h>
 #include <time.h>
+#include <sys/times.h>
+#include <signal.h>
 
+typedef struct arguments
+{
+    char* ipTx;
+    char* ipRx;
+    char* portTx; 
+    char* portRx;
+    int rateTx;
+} arguments;
+
+struct arguments * parseArgs(int argc, char **argv)
+{
+  if(argc != 6)
+  {
+    printf("usage: posix-socket <tx hostname> <rx hostname> <tx port> <rx port> <tx rate>\n");
+    return NULL;
+  }
+  char* pEnd;
+  
+  arguments args = {
+	.ipTx = argv[1],
+	.ipRx = argv[2],
+	.portTx = argv[3],
+	.portRx = argv[4],
+	.rateTx = strtol(argv[5], &pEnd, 10)
+  };
+  
+  return &args;
+}
+
+int createSocket(struct addrinfo * addr)
+{
+  printf("Creating new socket with given address info\n");
+
+  int sock = socket(addr->ai_family,addr->ai_socktype,addr->ai_protocol);
+  if (sock<0)
+  {
+    printf("Error occurred creating socket so now I am sad");
+    return -1;
+  }
+
+  printf("Successfully created socket: %ld\n", sock);
+  return sock;
+}
+
+struct addrinfo * createAddressInfo(const char* address, const char* port)
+{
+  printf("Creating address info for %s:%s\n", address, port);
+
+  int n;
+  struct addrinfo hints, *res;
+  bzero(&hints, sizeof(struct addrinfo));
+  hints.ai_flags=AI_PASSIVE;
+  hints.ai_family= AF_UNSPEC;
+  hints.ai_socktype= SOCK_DGRAM;
+  hints.ai_protocol=IPPROTO_UDP;
+
+  if((n = getaddrinfo(address, port, &hints, &res)) !=0)
+  {
+    printf("Error creating address for %s: %s",port,gai_strerror(n));
+    return NULL;
+  }
+  printf("Successfully created address info.\n");
+
+  return res;
+}
 
 const int NUM_MESSAGES = 5; //20
 const int INIT_WAIT = 1; //5
 const int END_WAIT = 2; //10
 
-void *TX_task(void *txDelay)
+void *TX_task(void *a)
 {
-    int msgNum = 0;
-    int* transDelay = txDelay;
-    struct timespec delay;
-    delay.tv_sec = (time_t)(*transDelay/1000);
-    delay.tv_nsec = (*transDelay%1000) * 1000000;
-    sleep(INIT_WAIT);
+  int socket;
+  socklen_t salen;
+  struct sockaddr *sa;
+  struct addrinfo *res, *ressave;
+  int count = 20;
 
-    while( msgNum < NUM_MESSAGES )
+  arguments * args = a;
+
+  ressave = res = createAddressInfo(NULL, args->portRx);
+
+  socket=createSocket(res);
+
+  sa=malloc(res->ai_addrlen);
+  memcpy(sa, res->ai_addr, res->ai_addrlen);
+  salen=res->ai_addrlen;
+
+  freeaddrinfo(ressave);
+
+  int i;
+  for ( i = 0; i < count; i++)
+  {
+    printf("I am TX and I am going to send a %d\n", i);
+
+    if( sendto(socket,&i,sizeof(i),0,sa, salen) < 0 )
     {
-        nanosleep(&delay, NULL);
-        printf("I am TX and I am going to send a %ld\n", ++msgNum);
+      if (errno == ENOBUFS)
+        continue;
+      perror("sending datagram");
+      return -1;
     }
-
-    sleep(END_WAIT);
-    printf("I am in TX\n");
-
-    return NULL;
+  }
+  close(socket);
 }
 
-void *RX_task(void *param)
+void *RX_task(void *a)
 {
-    int wait = 0;
-    int i = 0;
-    //sleep(5);
-    while( wait < 200 )
-    {
-        wait++;
-        printf("In RX %ld\n", i++);
+  int socket;
+  socklen_t addrlen, len;
+  struct sockaddr *cliaddr;
+  struct addrinfo *res, *ressave;
+
+  arguments * args = a;
+  
+  ressave = res = createAddressInfo(NULL, args->portRx);
+
+  socket=createSocket(res);
+
+  bind(socket, res->ai_addr, res->ai_addrlen);
+
+  if(&addrlen)
+    addrlen=res->ai_addrlen;
+
+  freeaddrinfo(ressave);
+
+  cliaddr=malloc(addrlen);
+
+  len=addrlen;
+
+  while ( 1 ) /* do forever */
+  {     
+    int rc;
+    int foo = 1;
+    int *foo2 = &foo;
+    if ((rc=recvfrom(socket, foo2, sizeof(foo), 0, cliaddr, &len)) < 0 ) {
+      printf("server error: errno %d\n",errno);
+      perror("reading datagram");
+      return -1;
     }
-    return NULL;
+    printf("I am RX and I got a %d\n", *foo2);
+  }
+  close(socket);
 }
 
 int main(int argc, char **argv)
@@ -61,23 +176,24 @@ int main(int argc, char **argv)
     printf("Transport Rate: %ld\n", rateTx);
 
     pthread_t thread_tx, thread_rx;
+	
+	arguments * args = parseArgs(argc, argv);
 
-    if( pthread_create(&thread_tx, NULL, TX_task, foo))
+    if( pthread_create(&thread_tx, NULL, TX_task, args))
     {
         perror("Couldn't create thread!");
         return 1;
     }
 
-    if( pthread_create(&thread_rx, NULL, RX_task, NULL))
+    if( pthread_create(&thread_rx, NULL, RX_task, args))
     {
         perror("Couldn't create thread!");
         return 1;
     }
     
     printf("I am waiting for TX\n");
-    void * blah;
 
-    pthread_join(thread_tx, blah);
+    pthread_join(thread_tx, NULL);
     
     printf("I am out of TX\n");
 
@@ -87,7 +203,6 @@ int main(int argc, char **argv)
     
     printf("a nice done message\n");
     
-    
-    
+
     return 0;
 }
