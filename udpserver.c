@@ -30,8 +30,7 @@
 
 #define ACK  'z'
 
-#define MAXBUF	10 * 1024 
-
+#define MAXBUF	10 * 1024;
 
 int main(int argc, char **argv)
 {
@@ -67,9 +66,10 @@ int main(int argc, char **argv)
 
  do {/* each of the returned IP address is tried*/
     sockfd=socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-    if (sockfd<0)
+    if (sockfd<0) {
+      printf("Socket creation failed\n");
       continue; /* fail, try next one*/
-   
+    }
     if (bind(sockfd, res->ai_addr, res->ai_addrlen) == 0)
       break; /*success*/
     
@@ -79,13 +79,13 @@ int main(int argc, char **argv)
  
  if(&addrlen)
    addrlen=res->ai_addrlen;
-
+ 
  freeaddrinfo(ressave);
 
  cliaddr=malloc(addrlen);
 
  len=addrlen;
- 
+
  while ( 1 ) {     /* do forever */
 	int rc;
 
@@ -95,7 +95,7 @@ int main(int argc, char **argv)
 		return -1;
 	}
 
-	printf("udpserver: got packet %d: ", current);
+	printf("udpserver: got packet %d\n", current);
 
 	if( sendto(sockfd,&ackvar,sizeof(long), 0,cliaddr,len  ) < 0 ) {
         	perror("sendto");
