@@ -28,9 +28,40 @@
 #include <errno.h>
 #include <signal.h>
 
-#define ACK  'z'
-
 #define MAXBUF	10 * 1024
+
+int createSocket(struct addrinfo * addr)
+{
+    printf("Creating new socket with given address info\n");
+    
+    int sock = socket(addr->ai_family,addr->ai_socktype,addr->ai_protocol);
+    if (sock<0) {
+        printf("Error occurred creating socket so now I am sad");
+        return -1;
+    }
+    
+    printf("Successfully created socket: %ld\n", sock);
+    return sock;
+}
+
+struct addrinfo * createAddressInfo(const char* address, const char* port)
+{
+    printf("Creating address info for %s:%s\n", address, port);
+    
+    /*initilize addrinfo structure*/ 
+    bzero(&hints, sizeof(struct addrinfo));
+    hints.ai_flags=AI_PASSIVE;
+    hints.ai_family= AF_UNSPEC;
+    hints.ai_socktype= SOCK_DGRAM;
+    hints.ai_protocol=IPPROTO_UDP;
+
+    if((n = getaddrinfo(NULL, port, &hints, &res)) !=0)
+        printf("udpserver error for %s: %s",port,gai_strerror(n));
+    
+    printf("Error occurred in createAddressInfo with err=%ld.\n", err);
+
+    return NULL;
+}
 
 int main(int argc, char **argv)
 {
@@ -41,9 +72,7 @@ int main(int argc, char **argv)
   struct sockaddr *cliaddr;
   char* port;
   struct addrinfo hints, *res, *ressave;
-  char buf[MAXBUF];
   int current = 0;
-  int ackvar = ACK;
 
  if(argc== 2){
    port=argv[1];
@@ -52,24 +81,13 @@ int main(int argc, char **argv)
  {  printf("usage: udpserver <portnumber>\n");
     return 0;
  }  
- /*initilize addrinfo structure*/ 
- bzero(&hints, sizeof(struct addrinfo));
- hints.ai_flags=AI_PASSIVE;
- hints.ai_family= AF_UNSPEC;
- hints.ai_socktype= SOCK_DGRAM;
- hints.ai_protocol=IPPROTO_UDP;
 
- if((n = getaddrinfo(NULL, port, &hints, &res)) !=0)
-   printf("udpserver error for %s: %s",port,gai_strerror(n));
+ 
+ res = createAddressInfo(host, port);
 
  ressave=res;
 
- sockfd=socket(res->ai_family, res->ai_socktype, res->ai_protocol);
- 
- if (sockfd<0) {
-     printf("Socket creation failed\n");
-     return -1;
- }
+ sockfd=createSocket(res);
 
  bind(sockfd, res->ai_addr, res->ai_addrlen);
        

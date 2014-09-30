@@ -29,7 +29,6 @@
  *
  */
 
-
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -40,9 +39,39 @@
 
 extern int errno;
 
-#define ACK 'z'
+int createSocket(struct addrinfo * addr)
+{
+    printf("Creating new socket with given address info\n");
+    
+    int sock = socket(addr->ai_family,addr->ai_socktype,addr->ai_protocol);
+    if (sock<0) {
+        printf("Error occurred creating socket so now I am sad");
+        return -1;
+    }
+    
+    printf("Successfully created socket: %ld\n", sock);
+    return sock;
+}
 
-#define BUFSIZE	1024
+
+struct addrinfo * createAddressInfo(const char* address, const char* port)
+{
+    printf("Creating address info for %s:%s\n", address, port);
+    
+    /*initilize addrinfo structure*/ 
+    bzero(&hints, sizeof(struct addrinfo));
+    hints.ai_flags=AI_PASSIVE;
+    hints.ai_family= AF_UNSPEC;
+    hints.ai_socktype= SOCK_DGRAM;
+    hints.ai_protocol=IPPROTO_UDP;
+
+    if((n = getaddrinfo(NULL, port, &hints, &res)) !=0)
+        printf("udpserver error for %s: %s",port,gai_strerror(n));
+    
+    printf("Error occurred in createAddressInfo with err=%ld.\n", err);
+
+    return NULL;
+}
 
 int main (int argc, char **argv){
   
@@ -52,16 +81,7 @@ int main (int argc, char **argv){
   struct addrinfo hints, *res, *ressave;
   char *host, *port, *count;
   int i;
-  struct msgbuf {
-		long count;      /* current buffer count 0..n */
-		char buf[BUFSIZE];
-  } mbuf;
   int fromlen;
-  int ackvar;
-  int nonacks,acks;
-
-  nonacks=0;
-  acks=0;
  
   if(argc != 4)
    { printf("usage: tcpclient <hostname/IPaddress> <portnumber> <count> \n");
@@ -72,21 +92,12 @@ int main (int argc, char **argv){
   port=argv[2];
   count=atoi(argv[3]);
  
-  /*initilize addrinfo structure*/
-  bzero(&hints, sizeof(struct addrinfo));  
-  hints.ai_family=AF_UNSPEC;
-  hints.ai_socktype=SOCK_DGRAM;
-  hints.ai_protocol=IPPROTO_UDP;
-
-  if((n=getaddrinfo(host, port, &hints, &res)) != 0)
-    printf("udpclient error for %s, %s: %s", host, port, gai_strerror(n));
+  res = createAddressInfo(host, port);
+  
   ressave=res;
 
-    sockfd=socket(res->ai_family, res->ai_socktype, res->ai_protocol);
-    if(sockfd < 0){
-      printf("Error creating socket\n");
-      return -1;
-    }
+  sockfd=createSocket(res);
+	
   sa=malloc(res->ai_addrlen);
   memcpy(sa, res->ai_addr, res->ai_addrlen);
   salen=res->ai_addrlen;
@@ -105,7 +116,7 @@ int main (int argc, char **argv){
    * client
    * sizeof (client)
    */
-   if( rc = sendto(sockfd,&i,sizeof (struct msgbuf),0,sa, salen) <0 ) {
+   if( rc = sendto(sockfd,&i,sizeof (i),0,sa, salen) <0 ) {
 	/* buffers aren't available locally at the moment,
 	 * try again.
 	 */
