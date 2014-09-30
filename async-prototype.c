@@ -12,6 +12,11 @@
 #include <sys/times.h>
 #include <signal.h>
 
+
+const int NUM_MESSAGES = 5; //20
+const int INIT_WAIT = 1; //5
+const int END_WAIT = 2; //10
+
 typedef struct arguments
 {
     char* ipTx;
@@ -77,19 +82,17 @@ struct addrinfo * createAddressInfo(const char* address, const char* port)
   return res;
 }
 
-const int NUM_MESSAGES = 5; //20
-const int INIT_WAIT = 1; //5
-const int END_WAIT = 2; //10
-
-void *TX_task(void *a)
+void *TX_task(void *args)
 {
   int socket;
   socklen_t salen;
   struct sockaddr *sa;
   struct addrinfo *res, *ressave;
   int count = 20;
-
-  arguments * args = a;
+  struct timespec delay;
+  delay.tv_sec = (time_t)(args->rateTx/1000);
+  delay.tv_nsec = (args->rateTx%1000) * 1000000;
+  sleep(INIT_WAIT);
 
   ressave = res = createAddressInfo(args->ipTx, args->portTx);
 
@@ -113,8 +116,11 @@ void *TX_task(void *a)
       perror("sending datagram");
       return NULL;
     }
+	
+	nanosleep(&delay, NULL);
   }
   close(socket);
+  sleep(END_WAIT);
   return NULL;
 }
 
