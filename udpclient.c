@@ -44,8 +44,6 @@ extern int errno;
 
 #define BUFSIZE	1024
 
-static fillBuf(buf,size);
-
 int main (int argc, char **argv){
   
   int sockfd, n, rc;
@@ -125,20 +123,3 @@ int main (int argc, char **argv){
 }
 
 static char bufval =  'a';
-
-/*
- * fill buffer with a character value
- *
- * Successive calls fill buffer with next character a-z...
- */
-static
-fillBuf(buf,size)
-register char *buf;
-register int size;
-{
-	register int i;
-
-	for ( i = 0; i < size; i++)
-		*buf++ = bufval;
-	bufval++;
-}
