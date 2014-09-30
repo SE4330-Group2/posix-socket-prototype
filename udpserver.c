@@ -49,7 +49,7 @@ struct addrinfo * createAddressInfo(const char* address, const char* port)
     printf("Creating address info for %s:%s\n", address, port);
     
 	int n;
-	struct addrinfo hints, *res,
+	struct addrinfo hints, *res;
     /*initilize addrinfo structure*/ 
     bzero(&hints, sizeof(struct addrinfo));
     hints.ai_flags=AI_PASSIVE;
