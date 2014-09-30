@@ -81,6 +81,8 @@ int main(int argc, char **argv)
   struct sockaddr *cliaddr;
   struct addrinfo *res, *ressave;
 
+  arguments * args = parseArgs(argc, argv);
+  
   res = createAddressInfo(NULL, args->portRx);
 
   ressave=res;
