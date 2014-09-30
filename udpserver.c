@@ -57,11 +57,11 @@ struct addrinfo * createAddressInfo(const char* address, const char* port)
     hints.ai_socktype= SOCK_DGRAM;
     hints.ai_protocol=IPPROTO_UDP;
 
-    if((n = getaddrinfo(NULL, port, &hints, &res)) !=0) {
+    if((n = getaddrinfo(address, port, &hints, &res)) !=0) {
         printf("udpserver error for %s: %s",port,gai_strerror(n));
 		return NULL;
     }
-    printf("Successfully created address info.\n", err);
+    printf("Successfully created address info.\n");
 
     return res;
 }
@@ -85,7 +85,7 @@ int main(int argc, char **argv)
  }  
 
  
- res = createAddressInfo(host, port);
+ res = createAddressInfo(NULL, port);
 
  ressave=res;
 
