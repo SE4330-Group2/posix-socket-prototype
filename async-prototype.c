@@ -1,3 +1,7 @@
+//Prototype 1
+//Datagrams and threads in Linux using POSIX standards
+//Group 2 - Kevin Brey, Jonathan Jakse, Cody Calhoun
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -12,11 +16,12 @@
 #include <sys/times.h>
 #include <signal.h>
 
-
 const int NUM_MESSAGES = 20;
 const int INIT_WAIT = 5;
 const int END_WAIT = 10;
 
+//Parameters for Tramsit IP, Receiver IP, Transmit Port,
+//Receive Port, and Transmission Rate
 typedef struct arguments
 {
     char* ipTx;
@@ -26,6 +31,8 @@ typedef struct arguments
     int rateTx;
 } arguments;
 
+//Takes args from the array of strings and converts them
+//to the format used in the arguments struct
 void parseArgs(int argc, char **argv, arguments * args)
 {
   if(argc != 6)
@@ -33,15 +40,15 @@ void parseArgs(int argc, char **argv, arguments * args)
     printf("usage: posix-socket <tx hostname> <rx hostname> <tx port> <rx port> <tx rate>\n");
     return;
   }
-  char* pEnd;
   
   args->ipTx = argv[1];
   args->ipRx = argv[2];
   args->portTx = argv[3];
   args->portRx = argv[4];
-  args->rateTx = strtol(argv[5], &pEnd, 10);
+  args->rateTx = strtol(argv[5], NULL, 10);
 }
 
+//Creates a socket for the given address addrinfo
 int createSocket(struct addrinfo * addr)
 {
   int sock = socket(addr->ai_family,addr->ai_socktype,addr->ai_protocol);
@@ -54,6 +61,7 @@ int createSocket(struct addrinfo * addr)
   return sock;
 }
 
+//Creates an addrinfo for the given host address and port
 struct addrinfo * createAddressInfo(const char* address, const char* port)
 {
   int n;
@@ -73,6 +81,9 @@ struct addrinfo * createAddressInfo(const char* address, const char* port)
   return res;
 }
 
+//After intial delay of 5 seconds, sends 20 messages through socket
+//incrementing message each time.  Waits 10 seconds after function
+//completes
 void *TX_task(void *a)
 {
   int socket;
@@ -113,6 +124,8 @@ void *TX_task(void *a)
   return NULL;
 }
 
+//Receives and displays messages from the transmitter.
+//Also times out 20 seconds after being started
 void *RX_task(void *a)
 {
   int socket;
@@ -158,6 +171,8 @@ void *RX_task(void *a)
   return NULL;
 }
 
+//Main function makes two threads for the transmitter and receiver and
+//then joins the threads when the functions have completed
 int main(int argc, char **argv)
 {
     pthread_t thread_tx, thread_rx;
